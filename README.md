@@ -75,7 +75,7 @@ The implementation focuses on reliability and user experience, ensuring sales re
 2. **Installation**:
    ```bash
    # Clone the repository
-   git clone [repository-url]
+   git clone https://github.com/Purity-dev-614E/Visit-Tracker.git
 
    # Navigate to project directory
    cd visit_tracker
