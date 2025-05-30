@@ -148,7 +148,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find and tap the status dropdown
-      final statusDropdownFinder = find.byType(DropdownButton<String>).at(1);
+      final statusDropdownFinder = find.byType(DropdownButtonFormField<String>).at(1);
       expect(statusDropdownFinder, findsOneWidget);
       await tester.tap(statusDropdownFinder);
       await tester.pumpAndSettle();
@@ -181,7 +181,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find and tap the status dropdown
-      final statusDropdownFinder = find.byType(DropdownButton<String>).at(1);
+      final statusDropdownFinder = find.byType(DropdownButtonFormField<String>).at(1);
       await tester.tap(statusDropdownFinder);
       await tester.pumpAndSettle();
 
