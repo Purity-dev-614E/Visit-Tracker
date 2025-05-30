@@ -4,10 +4,11 @@ import 'package:visit_tracker/env.dart';
 
 class ApiClient {
   final String _baseUrl = Env.baseUrl;
-  static const Map<String, String> _headers = {
+  Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'apikey': Env.apiKey,
-    'Authorization': 'Bearer ${Env.apiKey}'
+    'Authorization': 'Bearer ${Env.apiKey}',
+    'Prefer': 'return=representation'  // This tells Supabase to return the created record
   };
 
   Future<List<dynamic>> get(String endpoint) async {
@@ -22,14 +23,29 @@ class ApiClient {
   }
 
   Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
+    print('Sending data to $endpoint: ${jsonEncode(data)}');
     final response = await http.post(
       Uri.parse('$_baseUrl/$endpoint'),
       headers: _headers,
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 201) {
-      return json.decode(response.body);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    // Accept both 200 and 201 as success codes
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.body.isNotEmpty) {
+        final decoded = json.decode(response.body);
+        // Supabase might return an array with one item
+        if (decoded is List && decoded.isNotEmpty) {
+          return decoded[0];
+        }
+        return decoded;
+      } else {
+        // If body is empty but status is success, return the data that was sent
+        return data;
+      }
     } else {
       throw Exception('Failed to post data: ${response.statusCode} : ${response.body}');
     }

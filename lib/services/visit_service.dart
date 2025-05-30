@@ -12,8 +12,26 @@ class VisitService {
   }
 
   Future<Visit> addVisit(Visit visit) async {
-    final created = await _api.post('visits', visit.toJson());
-    return Visit.fromJson(created);
+    try {
+      logger.i('Attempting to add visit to Supabase');
+      logger.i('Visit data: ${visit.toJson()}');
+      
+      // Send the visit data to Supabase (without the ID)
+      final created = await _api.post('visits', visit.toJson());
+      logger.i('Visit added successfully to Supabase');
+      logger.i('Response from Supabase: $created');
+      
+      // If created is a List, take the first item
+      if (created is List && created.isNotEmpty) {
+        return Visit.fromJson(created[0]);
+      }
+      
+      // Otherwise, assume it's a Map
+      return Visit.fromJson(created);
+    } catch (e) {
+      logger.e('Error in addVisit: $e');
+      rethrow;
+    }
   }
 
   Future<void> updateVisit(int id, Map<String, dynamic> updates) async {

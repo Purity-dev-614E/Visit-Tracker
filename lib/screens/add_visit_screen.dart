@@ -7,12 +7,18 @@ import 'package:visit_tracker/models/visit.dart';
 import 'package:visit_tracker/providers/customer_provider.dart';
 import 'package:visit_tracker/widgets/app_textfield.dart';
 import 'package:visit_tracker/widgets/multi_select_chip.dart';
+import '../models/activity.dart';
 import '../providers/activity_provider.dart';
 import '../providers/visit_provider.dart';
 import '../widgets/dropdown_selector.dart';
 
 class AddVisitScreen extends StatefulWidget {
-  const AddVisitScreen({super.key});
+  final Visit? visit; // Optional visit for editing mode
+
+  const AddVisitScreen({
+    super.key,
+    this.visit,
+  });
 
   @override
   State<AddVisitScreen> createState() => _AddVisitScreenState();
@@ -36,6 +42,16 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
         activityProvider.loadFromHive();
         activityProvider.loadFromApi();
       }
+
+      // If in edit mode, populate the form with existing visit data
+      if (widget.visit != null) {
+        _selectedCustomerId = widget.visit!.customerId;
+        _selectedDate = widget.visit!.visitDate;
+        _selectedStatus = widget.visit!.status;
+        _locationController.text = widget.visit!.location;
+        _noteController.text = widget.visit!.notes;
+        _selectedActivities = List.from(widget.visit!.activityDone);
+      }
     });
   }
 
@@ -53,14 +69,28 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
     'Cancelled',
   ];
 
+  // Toggle an activity by ID
   void toggleActivity(String activityId) {
     setState(() {
       if (_selectedActivities.contains(activityId)) {
         _selectedActivities.remove(activityId);
+        print('Removed activity ID: $activityId');
       } else {
         _selectedActivities.add(activityId);
+        print('Added activity ID: $activityId');
       }
+      print('Selected activities: $_selectedActivities');
     });
+  }
+  
+  // Get the description for an activity ID
+  String getActivityDescription(String activityId) {
+    final activities = context.read<ActivityProvider>().activities;
+    final activity = activities.firstWhere(
+      (a) => a.id.toString() == activityId,
+      orElse: () => Activity(id: 0, description: "Unknown")
+    );
+    return activity.description;
   }
 
   void submitForm() async {
@@ -78,42 +108,37 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
       return;
     }
     try {
-      // Create a visit object with a random ID (similar to Supabase)
-      final random = Random();
-      final id = random.nextInt(0xFFFFFFFF);
+      // Create a visit object
+      logger.i('Creating visit object');
       
       final visit = Visit(
-          id: id,
+          id: widget.visit?.id ?? 0,  // Use existing ID if editing, otherwise 0
           customerId: _selectedCustomerId!,
           visitDate: _selectedDate!,
           status: _selectedStatus!,
           location: _locationController.text,
           notes: _noteController.text,
-          activityDone: _selectedActivities
+          activityDone: _selectedActivities,
+          isSynced: widget.visit?.isSynced ?? true
       );
+      
+      logger.i('Created visit object: ${visit.toJson()}');
 
-      // Call the provider to add the visit
+      // Call the provider to add/update the visit
+      logger.i('Calling VisitProvider.addVisit');
       await context.read<VisitProvider>().addVisit(visit);
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Visit added successfully')),
+        SnackBar(content: Text(widget.visit != null ? 'Visit updated successfully' : 'Visit added successfully')),
       );
-      // Clear form fields
-      setState(() {
-        _selectedCustomerId = null;
-        _selectedDate = null;
-        _selectedActivities.clear();
-        _locationController.clear();
-        _noteController.clear();
-        _selectedStatus = null;
-      });
+      
       // Go back to previous screen
       Navigator.pop(context);
     } catch (e) {
-      logger.e('Error adding visit: $e');
+      logger.e('Error submitting form: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding visit')),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
     }
   }
@@ -366,10 +391,18 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
                           border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: MultiSelectChip(
-                          options: activities.map((activity) => activity.description).toList(),
-                          selectedValues: _selectedActivities,
-                          onTap: toggleActivity,
+                        child: Wrap(
+                          spacing: 8,
+                          children: activities.map((activity) {
+                            final isSelected = _selectedActivities.contains(activity.id.toString());
+                            return FilterChip(
+                              label: Text(activity.description),
+                              selected: isSelected,
+                              onSelected: (_) {
+                                toggleActivity(activity.id.toString());
+                              },
+                            );
+                          }).toList(),
                         ),
                       ),
                       SizedBox(height: 24),

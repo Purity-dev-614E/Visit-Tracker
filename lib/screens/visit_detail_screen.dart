@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:visit_tracker/models/visit.dart';
 import '../providers/activity_provider.dart';
 import '../providers/customer_provider.dart';
+import '../providers/visit_provider.dart';
+import 'add_visit_screen.dart';
 
 class VisitDetailScreen extends StatelessWidget {
   final Visit visit;
@@ -16,17 +18,62 @@ class VisitDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final customerProvider = context.watch<CustomerProvider>();
     final activityProvider = context.watch<ActivityProvider>();
+    final visitProvider = context.watch<VisitProvider>();
 
     final customerName = customerProvider.getCustomerById(visit.customerId)?.name ?? 'Unknown Customer';
 
-    final activityDescription = visit.activityDone
-        .map ((activity) => activityProvider.getDescription(activity)).toList();
-
+    // Get activity descriptions from IDs
+    final activityDescriptions = visit.activityDone.map((activityId) {
+      final description = activityProvider.getDescription(activityId);
+      print('Activity ID: $activityId, Description: $description');
+      return description;
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Visit Details', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
+        actions: [
+          // Edit button
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddVisitScreen(visit: visit),
+                ),
+              );
+            },
+          ),
+          // Delete button
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Delete Visit'),
+                  content: Text('Are you sure you want to delete this visit?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await visitProvider.deleteVisit(visit.id);
+                        Navigator.pop(context); // Close dialog
+                        Navigator.pop(context); // Go back to list
+                      },
+                      child: Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -123,7 +170,7 @@ class VisitDetailScreen extends StatelessWidget {
                     content: '',
                     customContent: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: activityDescription.map((activity) => Padding(
+                      children: activityDescriptions.map((activity) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         child: Row(
                           children: [

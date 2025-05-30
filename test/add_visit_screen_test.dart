@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:visit_tracker/models/activity.dart';
 import 'package:visit_tracker/models/customer.dart';
@@ -55,6 +56,9 @@ class MockActivityProvider extends ChangeNotifier implements ActivityProvider {
 
 class MockVisitProvider extends ChangeNotifier implements VisitProvider {
   List<Visit> _visits = [];
+  
+  @override
+  final logger = Logger();
 
   @override
   List<Visit> get visits => _visits;

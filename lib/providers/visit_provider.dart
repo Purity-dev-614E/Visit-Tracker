@@ -28,20 +28,33 @@ class VisitProvider with ChangeNotifier {
   }
 
   Future<void> addVisit(Visit visit) async {
-
+    logger.i('VisitProvider: Adding visit to Supabase');
+    logger.i('Visit data: ${visit.toJson()}');
+    
     final box = Hive.box<Visit>('visits');
     try {
+      // Send to Supabase and get the created visit with the generated ID
       final created = await _service.addVisit(visit);
+      logger.i('Visit created successfully with Supabase ID: ${created.id}');
+      
+      // Store the visit with the Supabase-generated ID
       final syncedVisit = created.copyWith(isSynced: true);
       await box.put(created.id, syncedVisit);
       _visits.add(syncedVisit);
-    } catch (_) {
-
-      logger.e('provider error');
-      // If API call fails, save visit as unsynced
-      final unsyncedVisit = visit.copyWith(isSynced: false);
-      await box.put(unsyncedVisit.id, unsyncedVisit);
+      logger.i('Visit added to local storage and state with ID: ${created.id}');
+    } catch (e) {
+      logger.e('Error in VisitProvider.addVisit: $e');
+      
+      // If API call fails, generate a temporary negative ID for local storage
+      // Using negative IDs ensures they won't conflict with Supabase IDs
+      final tempId = -DateTime.now().millisecondsSinceEpoch;
+      logger.i('Generated temporary negative ID for local storage: $tempId');
+      
+      // Save visit as unsynced with the temporary ID
+      final unsyncedVisit = visit.copyWith(id: tempId, isSynced: false);
+      await box.put(tempId, unsyncedVisit);
       _visits.add(unsyncedVisit);
+      logger.i('Visit saved locally as unsynced with temp ID: $tempId');
     }
     notifyListeners();
   }
@@ -58,14 +71,31 @@ class VisitProvider with ChangeNotifier {
     final box = Hive.box<Visit>('visits');
     for (var visit in _visits.where((v) => !v.isSynced)) {
       try {
-        await _service.addVisit(visit);
-        final syncedVisit = visit.copyWith(isSynced: true);
-        await box.put(syncedVisit.id, syncedVisit);
+        logger.i('Attempting to sync unsynced visit with temp ID: ${visit.id}');
+        
+        // Create a copy of the visit with id=0 so Supabase will generate a new ID
+        final visitForSync = visit.copyWith(id: 0);
+        
+        // Send to Supabase and get the created visit with the generated ID
+        final created = await _service.addVisit(visitForSync);
+        logger.i('Visit synced successfully with new Supabase ID: ${created.id}');
+        
+        // Remove the old temporary ID entry
+        await box.delete(visit.id);
+        
+        // Add the new entry with the Supabase-generated ID
+        final syncedVisit = created.copyWith(isSynced: true);
+        await box.put(created.id, syncedVisit);
+        
+        // Update the visits list
+        _visits.remove(visit);
+        _visits.add(syncedVisit);
+        
+        logger.i('Local storage updated with synced visit');
       } catch (e) {
         // Handle sync error
         logger.e('Failed to sync visit ${visit.id}: $e');
       }
-      loadFromHive();
     }
     notifyListeners();
   }
