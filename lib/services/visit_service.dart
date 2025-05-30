@@ -1,8 +1,10 @@
+import 'package:logger/logger.dart';
 import 'package:visit_tracker/models/visit.dart';
 import 'package:visit_tracker/services/api_client.dart';
 
 class VisitService {
   final ApiClient _api = ApiClient();
+  final logger = Logger();
 
   Future<List<Visit>> fetchVisits() async {
     final data = await _api.get('visits');

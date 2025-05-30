@@ -31,7 +31,7 @@ class Visit extends HiveObject {
       status: json['status'] as String,
       location: json['location'] as String,
       notes: json['notes'] as String,
-      activityDone: List<String>.from(json['activity_done']),
+      activityDone: List<String>.from(json['activities_done']),
       isSynced: true
     );
   }
@@ -44,7 +44,7 @@ class Visit extends HiveObject {
       'status': status,
       'location': location,
       'notes': notes,
-      'activity_done': activityDone,
+      'activities_done': activityDone,
     };
   }
 
