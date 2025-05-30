@@ -147,9 +147,20 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Find and tap the status dropdown
-      final statusDropdownFinder = find.byType(DropdownButtonFormField<String>).at(1);
+      // Find and tap the status dropdown by finding the text "Visit Status" and moving to the next widget
+      final statusLabelFinder = find.text('Visit Status');
+      expect(statusLabelFinder, findsOneWidget);
+      
+      // Find the dropdown that follows the label
+      final statusDropdownFinder = find.ancestor(
+        of: find.byType(DropdownButtonFormField<String>),
+        matching: find.ancestor(
+          of: statusLabelFinder,
+          matching: find.byType(Column),
+        ),
+      );
       expect(statusDropdownFinder, findsOneWidget);
+      
       await tester.tap(statusDropdownFinder);
       await tester.pumpAndSettle();
 
@@ -180,8 +191,20 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Find and tap the status dropdown
-      final statusDropdownFinder = find.byType(DropdownButtonFormField<String>).at(1);
+      // Find and tap the status dropdown by finding the text "Visit Status" and moving to the next widget
+      final statusLabelFinder = find.text('Visit Status');
+      expect(statusLabelFinder, findsOneWidget);
+      
+      // Find the dropdown that follows the label
+      final statusDropdownFinder = find.ancestor(
+        of: find.byType(DropdownButtonFormField<String>),
+        matching: find.ancestor(
+          of: statusLabelFinder,
+          matching: find.byType(Column),
+        ),
+      );
+      expect(statusDropdownFinder, findsOneWidget);
+      
       await tester.tap(statusDropdownFinder);
       await tester.pumpAndSettle();
 
