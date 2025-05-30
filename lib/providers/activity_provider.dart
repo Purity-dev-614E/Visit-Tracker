@@ -3,34 +3,50 @@ import 'package:hive/hive.dart';
 import 'package:visit_tracker/services/activity_service.dart';
 import '../models/activity.dart';
 
-class ActivityProvider with ChangeNotifier{
+class ActivityProvider with ChangeNotifier {
   final ActivityService _service = ActivityService();
   List<Activity> _activities = [];
 
   List<Activity> get activities => _activities;
 
   Future<void> loadFromApi() async {
-    _activities = await _service.fetchActivities();
-    final box = Hive.box<Activity>('activities');
-    await box.clear();
-    for (final activity in _activities) {
-      box.put(activity.id, activity);
+    try {
+      _activities = await _service.fetchActivities();
+      final box = Hive.box<Activity>('activities');
+      await box.clear();
+      for (final activity in _activities) {
+        await box.put(activity.id, activity);
+      }
+      print('Loaded ${_activities.length} activities from API');
+      print('Activities: ${_activities.map((a) => '${a.id}: ${a.description}').join(', ')}');
+      notifyListeners();
+    } catch (e) {
+      print('Error loading activities from API: $e');
+      // If API fails, try to load from Hive
+      loadFromHive();
     }
-    notifyListeners();
   }
 
   void loadFromHive() {
-    final box = Hive.box<Activity>('activities');
-    _activities = box.values.toList();
-    notifyListeners();
+    try {
+      final box = Hive.box<Activity>('activities');
+      _activities = box.values.toList();
+      print('Loaded ${_activities.length} activities from Hive');
+      print('Activities: ${_activities.map((a) => '${a.id}: ${a.description}').join(', ')}');
+      notifyListeners();
+    } catch (e) {
+      print('Error loading activities from Hive: $e');
+      _activities = [];
+      notifyListeners();
+    }
   }
 
-  String getDescription(String id){
+  String getDescription(String id) {
     // Print for debugging
     print('Looking for activity with ID: $id');
     print('Available activities: ${_activities.map((a) => '${a.id}: ${a.description}').join(', ')}');
     
-    // Try to parse the ID as an integer if possible
+    // Try to parse the ID as an integer
     int? numericId;
     try {
       numericId = int.parse(id);
@@ -58,6 +74,8 @@ class ActivityProvider with ChangeNotifier{
     );
     
     print('Found activity by string ID: ${activityByStringId.description}');
+    print('Activity ID: ${activityByStringId.id}, Description: ${activityByStringId.description}');
+    
     return activityByStringId.description;
   }
 }

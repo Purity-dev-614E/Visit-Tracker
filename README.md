@@ -15,11 +15,20 @@ The implementation focuses on reliability and user experience, ensuring sales re
 
 ## Screenshots
 
-[Add 4 key screenshots here:
-1. Visit List Screen - showing the offline sync indicator and visit cards
-2. Add Visit Form - demonstrating the modern UI and validation
-3. Statistics Dashboard - displaying visit analytics
-4. Visit Details - showing comprehensive visit information]
+![Visit List Screen with Offline Support](assets/offline_support.png)
+*Visit List Screen showing offline sync indicator and visit cards*
+
+![Visit List Screen Online](assets/visit_list.png)
+*Visit List Screen with online status*
+
+![Add Visit Form](assets/add_visit.png)
+*Add Visit Form with modern UI and validation*
+
+![Statistics Dashboard](assets/statistics.png)
+*Statistics Dashboard displaying visit analytics*
+
+![Visit Details](assets/visit_details.png)
+*Visit Details showing comprehensive visit information*
 
 ## Architectural Choices
 
@@ -103,6 +112,22 @@ The implementation focuses on reliability and user experience, ensuring sales re
 - Widget tests for UI components
 - Integration tests for critical flows
 - Offline functionality tests
+
+The test suite includes:
+- Provider tests for state management
+- Form validation tests
+- Offline sync tests
+- UI component tests
+- Navigation tests
+
+To run the tests:
+```bash
+# Run all tests
+flutter test
+
+# Run specific test file
+flutter test test/add_visit_screen_test.dart
+```
 
 ## Assumptions, Trade-offs, and Limitations
 

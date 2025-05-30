@@ -6,7 +6,7 @@ import '../providers/customer_provider.dart';
 import '../providers/visit_provider.dart';
 import 'add_visit_screen.dart';
 
-class VisitDetailScreen extends StatelessWidget {
+class VisitDetailScreen extends StatefulWidget {
   final Visit visit;
 
   const VisitDetailScreen({
@@ -15,15 +15,31 @@ class VisitDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<VisitDetailScreen> createState() => _VisitDetailScreenState();
+}
+
+class _VisitDetailScreenState extends State<VisitDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load activities when screen is opened
+    final activityProvider = context.read<ActivityProvider>();
+    if (activityProvider.activities.isEmpty) {
+      activityProvider.loadFromHive();
+      activityProvider.loadFromApi();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final customerProvider = context.watch<CustomerProvider>();
     final activityProvider = context.watch<ActivityProvider>();
     final visitProvider = context.watch<VisitProvider>();
 
-    final customerName = customerProvider.getCustomerById(visit.customerId)?.name ?? 'Unknown Customer';
+    final customerName = customerProvider.getCustomerById(widget.visit.customerId)?.name ?? 'Unknown Customer';
 
     // Get activity descriptions from IDs
-    final activityDescriptions = visit.activityDone.map((activityId) {
+    final activityDescriptions = widget.visit.activityDone.map((activityId) {
       final description = activityProvider.getDescription(activityId);
       print('Activity ID: $activityId, Description: $description');
       return description;
@@ -41,7 +57,7 @@ class VisitDetailScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddVisitScreen(visit: visit),
+                  builder: (context) => AddVisitScreen(visit: widget.visit),
                 ),
               );
             },
@@ -62,7 +78,7 @@ class VisitDetailScreen extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () async {
-                        await visitProvider.deleteVisit(visit.id);
+                        await visitProvider.deleteVisit(widget.visit.id);
                         Navigator.pop(context); // Close dialog
                         Navigator.pop(context); // Go back to list
                       },
@@ -84,7 +100,7 @@ class VisitDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: _getStatusColor(visit.status).withOpacity(0.1),
+                color: _getStatusColor(widget.visit.status).withOpacity(0.1),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(16),
                   bottomRight: Radius.circular(16),
@@ -96,20 +112,20 @@ class VisitDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        _getStatusIcon(visit.status),
-                        color: _getStatusColor(visit.status),
+                        _getStatusIcon(widget.visit.status),
+                        color: _getStatusColor(widget.visit.status),
                         size: 24,
                       ),
                       SizedBox(width: 8),
                       Text(
-                        visit.status.toUpperCase(),
+                        widget.visit.status.toUpperCase(),
                         style: TextStyle(
-                          color: _getStatusColor(visit.status),
+                          color: _getStatusColor(widget.visit.status),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (!visit.isSynced) ...[
+                      if (!widget.visit.isSynced) ...[
                         SizedBox(width: 8),
                         Icon(
                           Icons.cloud_off,
@@ -138,7 +154,7 @@ class VisitDetailScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    visit.visitDate.toLocal().toString().split(' ')[0],
+                    widget.visit.visitDate.toLocal().toString().split(' ')[0],
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -158,7 +174,7 @@ class VisitDetailScreen extends StatelessWidget {
                     context,
                     title: 'Location',
                     icon: Icons.location_on,
-                    content: visit.location,
+                    content: widget.visit.location,
                   ),
                   SizedBox(height: 16),
 
@@ -194,12 +210,12 @@ class VisitDetailScreen extends StatelessWidget {
                   SizedBox(height: 16),
 
                   // Notes Card
-                  if (visit.notes.isNotEmpty)
+                  if (widget.visit.notes.isNotEmpty)
                     _buildDetailCard(
                       context,
                       title: 'Notes',
                       icon: Icons.note,
-                      content: visit.notes,
+                      content: widget.visit.notes,
                     ),
                 ],
               ),
