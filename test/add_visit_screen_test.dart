@@ -147,17 +147,17 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Find and tap the status dropdown by finding the text "Visit Status" and moving to the next widget
+      // Find the status dropdown by finding the text "Visit Status" and its sibling dropdown
       final statusLabelFinder = find.text('Visit Status');
       expect(statusLabelFinder, findsOneWidget);
       
-      // Find the dropdown that follows the label
-      final statusDropdownFinder = find.ancestor(
-        of: find.byType(DropdownButtonFormField<String>),
-        matching: find.ancestor(
+      // Find the dropdown that is a sibling of the label's parent (Container)
+      final statusDropdownFinder = find.descendant(
+        of: find.ancestor(
           of: statusLabelFinder,
-          matching: find.byType(Column),
+          matching: find.byType(Container),
         ),
+        matching: find.byType(DropdownButtonFormField<String>),
       );
       expect(statusDropdownFinder, findsOneWidget);
       
@@ -191,17 +191,17 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Find and tap the status dropdown by finding the text "Visit Status" and moving to the next widget
+      // Find the status dropdown by finding the text "Visit Status" and its sibling dropdown
       final statusLabelFinder = find.text('Visit Status');
       expect(statusLabelFinder, findsOneWidget);
       
-      // Find the dropdown that follows the label
-      final statusDropdownFinder = find.ancestor(
-        of: find.byType(DropdownButtonFormField<String>),
-        matching: find.ancestor(
+      // Find the dropdown that is a sibling of the label's parent (Container)
+      final statusDropdownFinder = find.descendant(
+        of: find.ancestor(
           of: statusLabelFinder,
-          matching: find.byType(Column),
+          matching: find.byType(Container),
         ),
+        matching: find.byType(DropdownButtonFormField<String>),
       );
       expect(statusDropdownFinder, findsOneWidget);
       
