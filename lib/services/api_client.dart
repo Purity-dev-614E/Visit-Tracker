@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:visit_tracker/env.dart';
+import '../env.dart';
 
 class ApiClient {
   final String _baseUrl = Env.baseUrl;

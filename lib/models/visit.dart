@@ -74,8 +74,7 @@ class Visit extends HiveObject {
       'activities_done': activitiesJson,
     };
     
-    // Only include ID for local storage, not for API requests to Supabase
-    // This is because Supabase is set to auto-generate IDs
+    // Only include ID if it's not 0 (new visit)
     if (id != 0) {
       json['id'] = id;
     }

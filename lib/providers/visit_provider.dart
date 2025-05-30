@@ -33,12 +33,15 @@ class VisitProvider with ChangeNotifier {
     
     final box = Hive.box<Visit>('visits');
     try {
+      // For new visits, ensure id is 0 so Supabase will generate an ID
+      final visitForApi = visit.id == 0 ? visit : visit.copyWith(id: 0);
+      
       // Send to Supabase and get the created visit with the generated ID
-      final created = await _service.addVisit(visit);
+      final created = await _service.addVisit(visitForApi);
       logger.i('Visit created successfully with Supabase ID: ${created.id}');
       
-      // Store the visit with the Supabase-generated ID
-      final syncedVisit = created.copyWith(isSynced: true);
+      // Store the visit with the Supabase-generated ID but preserve the original isSynced value
+      final syncedVisit = created.copyWith(isSynced: visit.isSynced);
       await box.put(created.id, syncedVisit);
       _visits.add(syncedVisit);
       logger.i('Visit added to local storage and state with ID: ${created.id}');
