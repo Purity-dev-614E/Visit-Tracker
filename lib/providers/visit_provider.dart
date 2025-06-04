@@ -5,11 +5,25 @@ import 'package:visit_tracker/services/visit_service.dart';
 import '../models/visit.dart';
 
 class VisitProvider with ChangeNotifier {
-  final VisitService _service = VisitService();
+  final VisitService _service;
   List<Visit> _visits = [];
+
+  VisitProvider({VisitService? service}) : _service = service ?? VisitService();
 
   final logger = Logger();
   List<Visit> get visits => _visits;
+
+  // Generate a temporary ID for local storage when API calls fail
+  // Uses a high number range to avoid conflicts with Supabase IDs
+  int _generateTempId() {
+    final box = Hive.box<Visit>('visits');
+    // Start from 1 billion and find the next available ID
+    int tempId = 1000000000;
+    while (box.containsKey(tempId)) {
+      tempId++;
+    }
+    return tempId;
+  }
 
   Future<void> loadFromApi() async {
     _visits = await _service.fetchVisits();
@@ -48,10 +62,11 @@ class VisitProvider with ChangeNotifier {
     } catch (e) {
       logger.e('Error in VisitProvider.addVisit: $e');
       
-      // If API call fails, generate a temporary negative ID for local storage
-      // Using negative IDs ensures they won't conflict with Supabase IDs
-      final tempId = -DateTime.now().millisecondsSinceEpoch;
-      logger.i('Generated temporary negative ID for local storage: $tempId');
+      // If API call fails, generate a temporary ID for local storage
+      // Using a large positive number to avoid conflicts with Supabase IDs
+      // Start from a high number (e.g., 1 billion) and work backwards
+      final tempId = _generateTempId();
+      logger.i('Generated temporary ID for local storage: $tempId');
       
       // Save visit as unsynced with the temporary ID
       final unsyncedVisit = visit.copyWith(id: tempId, isSynced: false);
